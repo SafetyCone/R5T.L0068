@@ -14,6 +14,14 @@ namespace R5T.L0068
     [FunctionalityMarker]
     public partial interface IProjectXElementOperator : IFunctionalityMarker
     {
+        public ITargetFrameworkMoniker Get_TargetFrameworkMoniker(XElement projectElement)
+        {
+            var targetFrameworkMoniker = Instances.ProjectXmlOperator.GetTargetFramework(projectElement)
+                .ToTargetFrameworkMoniker();
+
+            return targetFrameworkMoniker;
+        }
+
         public (IProjectSdkName sdkName, ITargetFrameworkMoniker targetFrameworkMoniker) Get_RuntimeTargetInformation(XElement projectElement)
         {
             var sdkName = Instances.ProjectXmlOperator.GetSdk(projectElement)

@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -9,7 +7,6 @@ using R5T.N0000;
 using R5T.T0132;
 using R5T.T0172;
 using R5T.T0172.Extensions;
-using R5T.T0179.Extensions;
 using R5T.T0227;
 
 using ITargetFrameworkMoniker = R5T.T0218.ITargetFrameworkMoniker;
@@ -67,6 +64,15 @@ namespace R5T.L0068
                 targetFrameworkMoniker);
 
             context = (projectSdkName, targetFrameworkMoniker, runtimeName);
+
+            return output;
+        }
+
+        public ITargetFrameworkMoniker Get_TargetFrameworkMoniker_Synchronous(IProjectFilePath projectFilePath)
+        {
+            var output = this.In_QueryProjectFileContext_Synchronous(
+                projectFilePath,
+                Instances.ProjectXElementOperator.Get_TargetFrameworkMoniker);
 
             return output;
         }
@@ -141,67 +147,16 @@ namespace R5T.L0068
         {
             var outputAssemblyDirectoryAssemblyFilePaths = Instances.AssemblyFilePathOperator.Get_AssemblyDirectoryAssemblyFilePaths(outputAssemblyFilePath);
 
-            var runtimeDirectoryAssemblyFilePaths = Instances.AssemblyFilePathOperator.Get_AssemblyFilePaths(runtimeDirectoryPath);
+            var runtimeAssemblyFilePaths = Instances.DotnetRuntimePathsOperator.Get_RuntimeAssemblyFilePaths(targetFrameworkMoniker);
 
-            // If the runtime name is not the base core runtime, add those.
-            var isCoreRuntime = runtimeName.Equals(Instances.DotnetRuntimeNames.Microsoft_NETCore_App);
+            var allDependencyAssemblyFilePaths = Instances.EnumerableOperator.Combine(
+                outputAssemblyDirectoryAssemblyFilePaths,
+                runtimeAssemblyFilePaths);
 
-            IAssemblyFilePath[] coreRuntimeAssemblyFilePaths;
-            if (isCoreRuntime)
-            {
-                coreRuntimeAssemblyFilePaths = Instances.ArrayOperator.Empty<IAssemblyFilePath>();
-            }
-            else
-            {
-                var coreRuntimeDirectoryPath = Instances.RuntimeDirectoryPathOperator.Get_RuntimeDirectoryPath(
-                    Instances.DotnetRuntimeNames.Microsoft_NETCore_App,
-                    targetFrameworkMoniker);
-
-                coreRuntimeAssemblyFilePaths = Instances.AssemblyFilePathOperator.Get_AssemblyFilePaths(coreRuntimeDirectoryPath);
-            }
-
-            // If in any dependency there is a Sdk="Microsoft.NET.Sdk.Razor" or <FrameworkReference Include="Microsoft.AspNetCore.App" />,
-            // then the publish result will be missing many assemblies since publish is counting on those assemblies being available from the runtime.
-            var isAspNetRuntimeDependent = true; // TODO
-
-            IAssemblyFilePath[] aspNetRuntimeAssemblyFilePaths;
-            if(isAspNetRuntimeDependent)
-            {
-                var aspNetRuntimeDirectoryPath = Instances.RuntimeDirectoryPathOperator.Get_RuntimeDirectoryPath(
-                    Instances.DotnetRuntimeNames.Microsoft_AspNetCore_App,
-                    targetFrameworkMoniker);
-
-                aspNetRuntimeAssemblyFilePaths = Instances.AssemblyFilePathOperator.Get_AssemblyFilePaths(aspNetRuntimeDirectoryPath);
-            }
-            else
-            {
-                aspNetRuntimeAssemblyFilePaths = Instances.ArrayOperator.Empty<IAssemblyFilePath>();
-            }
-
-            // May not be distinct.
-            var allDependencyAssemblyFilePaths = 
-                // Always start with the core runtime assembly file paths.
-                coreRuntimeAssemblyFilePaths
-                .Append(aspNetRuntimeAssemblyFilePaths)
-                .Append(outputAssemblyDirectoryAssemblyFilePaths)
-                // Put the runtime directory assembly file paths after the output assembly directory assembly file paths in the hopes that a distinct operation will use the first
-                // encountered value for a given file name.
-                .Append(runtimeDirectoryAssemblyFilePaths)
-                .ToArray();
-
-            // Need to make the file paths distinct.
-            // For now, make distinct by filename.
-            var dependencyAssemblyFilePathsByFileName = new Dictionary<string, IAssemblyFilePath>();
-            foreach (var dependencyAssemblyFilePath in allDependencyAssemblyFilePaths)
-            {
-                var fileName = Instances.PathOperator.Get_FileName(dependencyAssemblyFilePath.Value);
-
-                dependencyAssemblyFilePathsByFileName.TryAdd(
-                    fileName,
-                    dependencyAssemblyFilePath);
-            }
-
-            var dependencyAssemblyFilePaths = dependencyAssemblyFilePathsByFileName.Values.ToArray();
+            var dependencyAssemblyFilePaths = Instances.EnumerableOperator.Get_Distinct_KeepFirst(
+                allDependencyAssemblyFilePaths,
+                assemblyFilePath => Instances.PathOperator.Get_FileName(assemblyFilePath.Value),
+                out var duplicateAssemblyFilePathsByAssemblyFileName);
 
             var projectOutputAssemblyContext = new ProjectOutputAssemblyContext
             {
