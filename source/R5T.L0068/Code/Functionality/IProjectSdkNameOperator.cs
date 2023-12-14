@@ -3,7 +3,7 @@ using System;
 using R5T.L0032.T000;
 using R5T.T0132;
 
-using IProjectSdkNameStrings = R5T.L0032.Z000.Raw.Platform.IProjectSdkNames;
+using IProjectSdkNameStrings = R5T.L0032.Z001.Raw.IProjectSdkNames;
 using ITargetFrameworkMoniker = R5T.T0218.ITargetFrameworkMoniker;
 
 
