@@ -104,12 +104,8 @@ namespace R5T.L0068
 
             var highestSubVersion = Instances.VersionOperator.Choose_HighestSubVersionOf(
                 versionedDirectoryPathsByVersion.Keys,
-                dotnetMajorVersion);
-
-            if (highestSubVersion is null)
-            {
-                throw new Exception($"No subversions found for dotnet runtime '{runtimeName}', major version {dotnetMajorVersion}.");
-            }
+                dotnetMajorVersion)
+                ?? throw new Exception($"No subversions found for dotnet runtime '{runtimeName}', major version {dotnetMajorVersion}.");
 
             var output = this.Get_RuntimeDirectoryPath(
                 runtimeName,

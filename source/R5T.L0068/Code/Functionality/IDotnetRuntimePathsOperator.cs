@@ -16,7 +16,7 @@ namespace R5T.L0068
         /// <inheritdoc cref="Get_RuntimeAssemblyFilePaths_InOrder(ITargetFrameworkMoniker)" path="/summary"/>
         /// <para>Note: there may be duplicates in the output depending on how Microsoft thought to include assemblies in runtimes.
         /// There shouldn't be, but there might be. To de-duplicate, prefix the runtime assembly file paths with the target project's assembly file paths,
-        /// and keep the first file path with the same file name.</para>
+        /// and keep the first file path with the same file *name* (not path).</para>
         /// </summary>
         public IAssemblyFilePath[] Get_RuntimeAssemblyFilePaths(ITargetFrameworkMoniker targetFrameworkMoniker)
         {
